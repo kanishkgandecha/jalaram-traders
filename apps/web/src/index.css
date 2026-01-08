@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* Custom theme variables */
+:root {
+  --color-primary: #16a34a;
+  --color-primary-dark: #15803d;
+  --color-primary-light: #22c55e;
+  --color-background: #f0fdf4;
+  --color-surface: #ffffff;
+  --color-accent: #eab308;
+}
+
+/* Base styles */
+body {
+  @apply bg-green-50 text-gray-900 antialiased;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-green-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-green-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-green-500;
+}
+
+/* Mobile-first touch targets */
+@media (max-width: 768px) {
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-green-500;
+}
+
+/* Custom utility classes */
+@utility container-app {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+@utility card {
+  @apply bg-white rounded-xl shadow-sm border border-green-100;
+}
+
+@utility btn-primary {
+  @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200;
+}
+
+@utility btn-secondary {
+  @apply bg-white hover:bg-green-50 text-green-700 font-medium py-2.5 px-4 rounded-lg border border-green-300 transition-colors duration-200;
+}
+
+@utility input-field {
+  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors;
+}
