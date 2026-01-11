@@ -306,7 +306,7 @@ const orderSchema = new mongoose.Schema(
 // ==========================================
 
 orderSchema.index({ user: 1, createdAt: -1 });
-orderSchema.index({ orderNumber: 1 });
+// orderNumber index is already created by unique: true on the field definition
 orderSchema.index({ status: 1 });
 orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ assignedEmployee: 1 });

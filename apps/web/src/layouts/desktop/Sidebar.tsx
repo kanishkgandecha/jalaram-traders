@@ -2,6 +2,7 @@
  * Desktop Sidebar
  * ================
  * Collapsible sidebar navigation for desktop dashboards
+ * Updated with order management for admin/employee
  */
 
 import { NavLink, useNavigate } from 'react-router-dom';
@@ -16,6 +17,8 @@ import {
     LogOut,
     ChevronLeft,
     ChevronRight,
+    Boxes,
+    CreditCard,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -41,7 +44,10 @@ export function Sidebar() {
 
     mainNavItems.push({ to: `${basePath}/orders`, icon: <ClipboardList size={20} />, label: 'Orders' });
 
+    // Admin-specific section items
     const adminNavItems = [
+        { to: '/dashboard/admin/inventory', icon: <Boxes size={20} />, label: 'Inventory', roles: ['admin'] },
+        { to: '/dashboard/employee/stock', icon: <Boxes size={20} />, label: 'Stock', roles: ['employee'] },
         { to: '/dashboard/admin/users', icon: <Users size={20} />, label: 'Users', roles: ['admin'] },
         { to: '/dashboard/admin/reports', icon: <BarChart3 size={20} />, label: 'Reports', roles: ['admin', 'employee'] },
     ];
@@ -87,11 +93,11 @@ export function Sidebar() {
             <div className="flex items-center justify-between h-16 px-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                     <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center shadow-lg">
-  <img
-  src="/logo-white.png"
-  alt="Logo"
-  className="w-6 h-6"
-/>
+                        <img
+                            src="/logo-white.png"
+                            alt="Logo"
+                            className="w-6 h-6"
+                        />
                     </div>
                     {!collapsed && (
                         <div>
@@ -115,13 +121,13 @@ export function Sidebar() {
                     {mainNavItems.map(renderNavItem)}
                 </div>
 
-                {/* Admin Section */}
+                {/* Admin/Employee Section */}
                 {['admin', 'employee'].includes(userRole) && (
                     <>
                         <div className="pt-4 mt-4 border-t border-gray-100">
                             {!collapsed && (
                                 <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase">
-                                    Admin
+                                    Management
                                 </p>
                             )}
                             <div className="space-y-1">

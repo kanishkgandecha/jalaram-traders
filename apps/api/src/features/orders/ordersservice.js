@@ -81,9 +81,10 @@ const createOrder = async (userId, orderData) => {
         }
 
         // Validate MOQ
-        if (cartItem.quantity < product.minOrderQuantity) {
+        const minQty = product.minOrderQuantity || 1;
+        if (cartItem.quantity < minQty) {
             const error = new Error(
-                `Minimum order quantity for "${product.name}" is ${product.minOrderQuantity} ${product.unit}`
+                `Minimum order quantity for "${product.name}" is ${minQty} ${product.unit}`
             );
             error.statusCode = 400;
             throw error;

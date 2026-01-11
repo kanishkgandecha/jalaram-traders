@@ -11,6 +11,8 @@ export interface BulkPricingTier {
     discountPercent: number;
 }
 
+export type PricingMode = 'WHOLESALE_ONLY' | 'WHOLESALE_AND_RETAIL';
+
 export interface Product {
     _id: string;
     name: string;
@@ -20,21 +22,41 @@ export interface Product {
     subCategory?: string;
     brand?: string;
     manufacturer?: string;
-    basePrice: number;
+
+    // Pricing System
+    wholesalePrice: number;
+    wholesaleMOQ: number;
+    retailMRP?: number | null;
+    retailMaxQuantity?: number;
+    pricingMode: PricingMode;
+    basePrice: number; // Legacy compatibility
     bulkPricing: BulkPricingTier[];
+
+    // GST
     hsnCode?: string;
     gstRate: number;
+
+    // Units
     unit: string;
     packSize?: string;
     minOrderQuantity: number;
     maxOrderQuantity: number | null;
-    stock: number;
+
+    // Inventory
+    stock?: number; // Deprecated - use stockTotal/stockReserved
+    stockTotal: number;
+    stockReserved: number;
+    stockAvailable?: number; // Computed virtual
     lowStockThreshold: number;
+
+    // Media
     images: Array<{
         url: string;
         alt?: string;
         isPrimary: boolean;
     }>;
+
+    // Status
     isActive: boolean;
     isFeatured: boolean;
     tags: string[];

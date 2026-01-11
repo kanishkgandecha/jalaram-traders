@@ -20,13 +20,14 @@
 const getPriceForRole = (product, role, quantity = 1) => {
     // Admin and Employee see all pricing info
     if (role === 'admin' || role === 'employee') {
+        const effectivePrice = product.wholesalePrice || product.basePrice;
         return {
-            wholesalePrice: product.wholesalePrice,
-            wholesaleMOQ: product.wholesaleMOQ,
+            wholesalePrice: effectivePrice,
+            wholesaleMOQ: product.wholesaleMOQ || product.minOrderQuantity || 1,
             retailMRP: product.retailMRP,
             retailMaxQuantity: product.retailMaxQuantity,
-            pricingMode: product.pricingMode,
-            bulkPricing: product.bulkPricing,
+            pricingMode: product.pricingMode || 'WHOLESALE_ONLY',
+            bulkPricing: product.bulkPricing || [],
             // Calculate based on wholesale for admin view
             ...calculateWholesalePrice(product, quantity),
         };
@@ -34,12 +35,13 @@ const getPriceForRole = (product, role, quantity = 1) => {
 
     // Retailer sees wholesale pricing only
     if (role === 'retailer') {
+        const effectivePrice = product.wholesalePrice || product.basePrice;
         return {
-            price: product.wholesalePrice,
-            minQuantity: product.wholesaleMOQ,
+            price: effectivePrice,
+            minQuantity: product.wholesaleMOQ || product.minOrderQuantity || 1,
             unit: product.unit,
-            gstRate: product.gstRate,
-            bulkPricing: product.bulkPricing,
+            gstRate: product.gstRate || 18,
+            bulkPricing: product.bulkPricing || [],
             ...calculateWholesalePrice(product, quantity),
         };
     }
@@ -74,6 +76,10 @@ const getPriceForRole = (product, role, quantity = 1) => {
  * @returns {Object} Calculated price details
  */
 const calculateWholesalePrice = (product, quantity) => {
+    // Use wholesalePrice or fall back to basePrice for legacy products
+    const effectivePrice = product.wholesalePrice || product.basePrice || 0;
+    const gstRate = product.gstRate || 18;
+
     // Sort bulk pricing by minQuantity descending
     const sortedTiers = [...(product.bulkPricing || [])].sort(
         (a, b) => b.minQuantity - a.minQuantity
@@ -86,7 +92,7 @@ const calculateWholesalePrice = (product, quantity) => {
             (tier.maxQuantity === null || quantity <= tier.maxQuantity)
     );
 
-    let pricePerUnit = product.wholesalePrice;
+    let pricePerUnit = effectivePrice;
     let discountPercent = 0;
     let tierApplied = 'base';
 
@@ -97,19 +103,19 @@ const calculateWholesalePrice = (product, quantity) => {
     }
 
     const subtotal = pricePerUnit * quantity;
-    const gstAmount = (subtotal * product.gstRate) / 100;
+    const gstAmount = (subtotal * gstRate) / 100;
     const total = subtotal + gstAmount;
 
     return {
         pricePerUnit,
         quantity,
         subtotal,
-        gstRate: product.gstRate,
+        gstRate,
         gstAmount,
         total,
         discountPercent,
         tierApplied,
-        savings: (product.wholesalePrice - pricePerUnit) * quantity,
+        savings: (effectivePrice - pricePerUnit) * quantity,
     };
 };
 
@@ -148,11 +154,12 @@ const calculateRetailPrice = (product, quantity) => {
 const validateOrderQuantity = (product, role, quantity) => {
     if (role === 'retailer') {
         // Must meet wholesale MOQ
-        if (quantity < product.wholesaleMOQ) {
+        const minQty = product.wholesaleMOQ || product.minOrderQuantity || 1;
+        if (quantity < minQty) {
             return {
                 valid: false,
-                message: `Minimum order quantity is ${product.wholesaleMOQ} ${product.unit}`,
-                minQuantity: product.wholesaleMOQ,
+                message: `Minimum order quantity is ${minQty} ${product.unit}`,
+                minQuantity: minQty,
             };
         }
 
@@ -215,11 +222,13 @@ const filterProductForRole = (product, role) => {
     if (role === 'retailer') {
         // Hide retail pricing, show wholesale
         const { retailMRP, retailMaxQuantity, ...wholesaleView } = productObj;
+        const effectivePrice = productObj.wholesalePrice || productObj.basePrice;
         return {
             ...wholesaleView,
             // Map wholesalePrice to basePrice for backwards compatibility
-            basePrice: productObj.wholesalePrice,
-            minOrderQuantity: productObj.wholesaleMOQ,
+            basePrice: effectivePrice,
+            // Use minOrderQuantity from product (don't override with wholesaleMOQ)
+            minOrderQuantity: productObj.minOrderQuantity || productObj.wholesaleMOQ || 1,
         };
     }
 

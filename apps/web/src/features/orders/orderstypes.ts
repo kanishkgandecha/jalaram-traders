@@ -33,10 +33,20 @@ export interface Address {
     pincode: string;
 }
 
+export interface StatusHistoryItem {
+    status: string;
+    timestamp: string;
+    note?: string;
+    updatedBy?: {
+        _id: string;
+        name: string;
+    };
+}
+
 export interface Order {
     _id: string;
     orderNumber: string;
-    user: string;
+    user: string | { _id: string; name: string; email: string; phone: string };
     customerSnapshot: {
         name: string;
         email: string;
@@ -56,17 +66,54 @@ export interface Order {
     totalAmount: number;
     shippingAddress: Address;
     billingAddress: Address;
-    status: 'pending' | 'confirmed' | 'processing' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'returned';
-    paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'partial_refund';
-    paymentMethod?: 'razorpay' | 'cod' | 'credit' | 'bank_transfer';
-    paymentDetails?: {
-        razorpayOrderId?: string;
-        razorpayPaymentId?: string;
-        paidAt?: string;
+
+    // Order Status - New workflow
+    status: 'pending_payment' | 'paid' | 'accepted' | 'in_transit' | 'delivered' | 'cancelled';
+    statusHistory: StatusHistoryItem[];
+
+    // Assigned employee
+    assignedEmployee?: {
+        _id: string;
+        name: string;
     };
+
+    // Payment
+    paymentStatus: 'pending' | 'submitted' | 'confirmed' | 'failed';
+    paymentMethod?: 'upi' | 'bank_transfer';
+    paymentSubmittedAt?: string;
+    paymentConfirmedAt?: string;
+    paymentConfirmedBy?: {
+        _id: string;
+        name: string;
+    };
+    paymentReference?: string;
+    paymentProofUrl?: string;
+
+    // Invoice
     invoiceNumber?: string;
     invoiceDate?: string;
+
+    // Notes
     customerNotes?: string;
+    internalNotes?: string;
+
+    // Delivery
+    expectedDeliveryDate?: string;
+    actualDeliveryDate?: string;
+
+    // Cancellation
+    cancellationReason?: string;
+    cancelledAt?: string;
+    cancelledBy?: {
+        _id: string;
+        name: string;
+    };
+
+    // Computed
+    totalItems?: number;
+    canBeCancelled?: boolean;
+    canConfirmPayment?: boolean;
+
     createdAt: string;
     updatedAt: string;
 }
@@ -97,5 +144,77 @@ export interface CreateOrderRequest {
     shippingAddress: Address;
     billingAddress?: Address;
     customerNotes?: string;
-    paymentMethod?: string;
+    paymentMethod: 'upi' | 'bank_transfer';
 }
+
+// Status display configuration
+export const ORDER_STATUS_CONFIG: Record<string, {
+    label: string;
+    color: string;
+    bgColor: string;
+    description: string;
+}> = {
+    pending_payment: {
+        label: 'Pending Payment',
+        color: 'text-yellow-700',
+        bgColor: 'bg-yellow-50',
+        description: 'Waiting for payment',
+    },
+    paid: {
+        label: 'Paid',
+        color: 'text-blue-700',
+        bgColor: 'bg-blue-50',
+        description: 'Payment confirmed',
+    },
+    accepted: {
+        label: 'Accepted',
+        color: 'text-purple-700',
+        bgColor: 'bg-purple-50',
+        description: 'Order accepted for processing',
+    },
+    in_transit: {
+        label: 'In Transit',
+        color: 'text-indigo-700',
+        bgColor: 'bg-indigo-50',
+        description: 'Order is on the way',
+    },
+    delivered: {
+        label: 'Delivered',
+        color: 'text-green-700',
+        bgColor: 'bg-green-50',
+        description: 'Order delivered successfully',
+    },
+    cancelled: {
+        label: 'Cancelled',
+        color: 'text-red-700',
+        bgColor: 'bg-red-50',
+        description: 'Order was cancelled',
+    },
+};
+
+export const PAYMENT_STATUS_CONFIG: Record<string, {
+    label: string;
+    color: string;
+    bgColor: string;
+}> = {
+    pending: {
+        label: 'Pending',
+        color: 'text-gray-700',
+        bgColor: 'bg-gray-50',
+    },
+    submitted: {
+        label: 'Submitted',
+        color: 'text-yellow-700',
+        bgColor: 'bg-yellow-50',
+    },
+    confirmed: {
+        label: 'Confirmed',
+        color: 'text-green-700',
+        bgColor: 'bg-green-50',
+    },
+    failed: {
+        label: 'Failed',
+        color: 'text-red-700',
+        bgColor: 'bg-red-50',
+    },
+};

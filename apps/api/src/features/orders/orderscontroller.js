@@ -96,14 +96,7 @@ const getPendingPaymentOrders = async (req, res) => {
     try {
         const { orders, pagination } = await ordersService.getPendingPaymentOrders(req.query);
 
-        sendPaginated(
-            res,
-            orders,
-            pagination.page,
-            pagination.limit,
-            pagination.total,
-            'Pending payment orders retrieved successfully'
-        );
+        sendPaginated(res, orders, pagination);
     } catch (error) {
         console.error('Get pending payment orders error:', error);
         sendError(res, error.statusCode || 500, error.message);
@@ -122,14 +115,7 @@ const getEmployeeOrders = async (req, res) => {
             req.query
         );
 
-        sendPaginated(
-            res,
-            orders,
-            pagination.page,
-            pagination.limit,
-            pagination.total,
-            'Assigned orders retrieved successfully'
-        );
+        sendPaginated(res, orders, pagination);
     } catch (error) {
         console.error('Get employee orders error:', error);
         sendError(res, error.statusCode || 500, error.message);
@@ -145,14 +131,7 @@ const getAllOrders = async (req, res) => {
     try {
         const { orders, pagination } = await ordersService.getAllOrders(req.query);
 
-        sendPaginated(
-            res,
-            orders,
-            pagination.page,
-            pagination.limit,
-            pagination.total,
-            'Orders retrieved successfully'
-        );
+        sendPaginated(res, orders, pagination);
     } catch (error) {
         console.error('Get all orders error:', error);
         sendError(res, error.statusCode || 500, error.message);
@@ -168,14 +147,7 @@ const getMyOrders = async (req, res) => {
     try {
         const { orders, pagination } = await ordersService.getUserOrders(req.user._id, req.query);
 
-        sendPaginated(
-            res,
-            orders,
-            pagination.page,
-            pagination.limit,
-            pagination.total,
-            'Orders retrieved successfully'
-        );
+        sendPaginated(res, orders, pagination);
     } catch (error) {
         console.error('Get my orders error:', error);
         sendError(res, error.statusCode || 500, error.message);

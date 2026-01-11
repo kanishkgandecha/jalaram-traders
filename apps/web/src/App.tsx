@@ -25,7 +25,10 @@ import RegisterPage from './features/auth/pages/RegisterPage';
 import AdminDashboard from './features/admin/AdminDashboard';
 import AdminUsersPage from './features/admin/pages/AdminUsersPage';
 import AdminReportsPage from './features/admin/pages/AdminReportsPage';
+import InventoryManagement from './features/admin/pages/InventoryManagement';
+import InventoryLogsPage from './features/inventory/pages/InventoryLogsPage';
 import EmployeeDashboard from './features/employee/EmployeeDashboard';
+import StockManagement from './features/employee/pages/StockManagement';
 import RetailerDashboard from './features/retailer/RetailerDashboard';
 import FarmerDashboard from './features/farmer/FarmerDashboard';
 
@@ -34,12 +37,33 @@ import ProductListPage from './features/products/pages/ProductListPage';
 import ProductDetailPage from './features/products/pages/ProductDetailPage';
 import CartPage from './features/cart/pages/CartPage';
 import OrderHistoryPage from './features/orders/pages/OrderHistoryPage';
+import OrderDetailPage from './features/orders/pages/OrderDetailPage';
+
+// Checkout
+import CheckoutPage from './features/checkout/pages/CheckoutPage';
+
+// Admin/Employee Orders Management
+import AdminOrdersPage from './features/admin/pages/AdminOrdersPage';
+import EmployeeOrdersPage from './features/employee/pages/EmployeeOrdersPage';
+
+// Profile
+import ProfilePage from './features/profile/ProfilePage';
 
 /**
  * Protected Route wrapper - redirects to login if not authenticated
+ * Waits for hydration to complete before making routing decisions
  */
 function ProtectedRoute() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isHydrated } = useAuthStore();
+
+  // Show loading while hydrating from localStorage
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -63,9 +87,19 @@ function RoleRoute({ allowedRoles, children }: { allowedRoles: string[]; childre
 
 /**
  * Public Route wrapper - redirects to dashboard if authenticated
+ * Waits for hydration to complete before making routing decisions
  */
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, getDashboardRoute } = useAuthStore();
+  const { isAuthenticated, isHydrated, getDashboardRoute } = useAuthStore();
+
+  // Show loading while hydrating from localStorage
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   if (isAuthenticated) {
     return <Navigate to={getDashboardRoute()} replace />;
@@ -85,49 +119,6 @@ function DashboardLayout() {
   }
 
   return <DesktopLayout />;
-}
-
-/**
- * Profile Page
- */
-function ProfilePage() {
-  const { user, logout } = useAuthStore();
-
-  return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Profile</h1>
-      <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-        <div>
-          <label className="text-sm text-gray-500">Name</label>
-          <p className="font-medium text-gray-900">{user?.name}</p>
-        </div>
-        <div>
-          <label className="text-sm text-gray-500">Email</label>
-          <p className="font-medium text-gray-900">{user?.email}</p>
-        </div>
-        <div>
-          <label className="text-sm text-gray-500">Phone</label>
-          <p className="font-medium text-gray-900">{user?.phone}</p>
-        </div>
-        <div>
-          <label className="text-sm text-gray-500">Role</label>
-          <p className="font-medium text-gray-900 capitalize">{user?.role}</p>
-        </div>
-        {user?.businessName && (
-          <div>
-            <label className="text-sm text-gray-500">Business Name</label>
-            <p className="font-medium text-gray-900">{user.businessName}</p>
-          </div>
-        )}
-        <button
-          onClick={logout}
-          className="w-full mt-4 py-3 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors"
-        >
-          Logout
-        </button>
-      </div>
-    </div>
-  );
 }
 
 /**
@@ -221,7 +212,7 @@ export function App() {
               path="/dashboard/admin/orders"
               element={
                 <RoleRoute allowedRoles={['admin']}>
-                  <OrderHistoryPage />
+                  <AdminOrdersPage />
                 </RoleRoute>
               }
             />
@@ -230,6 +221,22 @@ export function App() {
               element={
                 <RoleRoute allowedRoles={['admin']}>
                   <ProfilePage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/dashboard/admin/inventory"
+              element={
+                <RoleRoute allowedRoles={['admin']}>
+                  <InventoryManagement />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/dashboard/admin/inventory/logs"
+              element={
+                <RoleRoute allowedRoles={['admin']}>
+                  <InventoryLogsPage />
                 </RoleRoute>
               }
             />
@@ -257,7 +264,7 @@ export function App() {
               path="/dashboard/employee/orders"
               element={
                 <RoleRoute allowedRoles={['employee', 'admin']}>
-                  <OrderHistoryPage />
+                  <EmployeeOrdersPage />
                 </RoleRoute>
               }
             />
@@ -269,6 +276,14 @@ export function App() {
                 </RoleRoute>
               }
             />
+            <Route
+              path="/dashboard/employee/stock"
+              element={
+                <RoleRoute allowedRoles={['employee', 'admin']}>
+                  <StockManagement />
+                </RoleRoute>
+              }
+            />
 
             {/* ========================================
                 RETAILER ROUTES
@@ -277,7 +292,9 @@ export function App() {
             <Route path="/dashboard/retailer/products" element={<ProductListPage />} />
             <Route path="/dashboard/retailer/products/:id" element={<ProductDetailPage />} />
             <Route path="/dashboard/retailer/cart" element={<CartPage />} />
+            <Route path="/dashboard/retailer/checkout" element={<CheckoutPage />} />
             <Route path="/dashboard/retailer/orders" element={<OrderHistoryPage />} />
+            <Route path="/dashboard/retailer/orders/:id" element={<OrderDetailPage />} />
             <Route path="/dashboard/retailer/profile" element={<ProfilePage />} />
 
             {/* ========================================
@@ -287,8 +304,16 @@ export function App() {
             <Route path="/dashboard/farmer/products" element={<ProductListPage />} />
             <Route path="/dashboard/farmer/products/:id" element={<ProductDetailPage />} />
             <Route path="/dashboard/farmer/cart" element={<CartPage />} />
+            <Route path="/dashboard/farmer/checkout" element={<CheckoutPage />} />
             <Route path="/dashboard/farmer/orders" element={<OrderHistoryPage />} />
+            <Route path="/dashboard/farmer/orders/:id" element={<OrderDetailPage />} />
             <Route path="/dashboard/farmer/profile" element={<ProfilePage />} />
+
+            {/* ========================================
+                SHARED ORDER DETAIL ROUTE
+                All authenticated users can view orders
+                ======================================== */}
+            <Route path="/orders/:id" element={<OrderDetailPage />} />
           </Route>
         </Route>
 

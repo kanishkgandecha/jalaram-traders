@@ -169,8 +169,8 @@ userSchema.index({ 'address.district': 1 });
  * Hash password before saving
  */
 userSchema.pre('save', async function () {
-    // Only hash if password is modified
-    if (!this.isModified('password')) {
+    // Only hash if password is modified and exists
+    if (!this.isModified('password') || !this.password) {
         return;
     }
 

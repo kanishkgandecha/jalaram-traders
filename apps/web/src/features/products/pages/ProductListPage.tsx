@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { Search, Filter, Package, ShoppingCart } from 'lucide-react';
 import { Card } from '../../../shared/ui/Card';
 import { Button } from '../../../shared/ui/Button';
+import { useAuthStore } from '../../auth/authstore';
 import productsApi from '../productsapi';
 import type { Product, ProductFilters } from '../productstypes';
 
@@ -22,6 +23,9 @@ const categories = [
 ];
 
 export function ProductListPage() {
+    const { user } = useAuthStore();
+    const basePath = `/dashboard/${user?.role || 'retailer'}`;
+
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState<ProductFilters>({
@@ -87,8 +91,8 @@ export function ProductListPage() {
                             key={cat.value}
                             onClick={() => handleCategoryChange(cat.value)}
                             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filters.category === cat.value
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-white text-gray-700 border border-gray-200 hover:border-green-300'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-white text-gray-700 border border-gray-200 hover:border-green-300'
                                 }`}
                         >
                             {cat.label}
@@ -117,7 +121,7 @@ export function ProductListPage() {
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {products.map((product) => (
-                        <Link key={product._id} to={`/products/${product._id}`}>
+                        <Link key={product._id} to={`${basePath}/products/${product._id}`}>
                             <Card hover padding="sm" className="h-full">
                                 {/* Product Image */}
                                 <div className="aspect-square bg-green-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">

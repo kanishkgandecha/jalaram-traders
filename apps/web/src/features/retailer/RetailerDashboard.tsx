@@ -2,6 +2,7 @@
  * Retailer Dashboard
  * ====================
  * Order-focused dashboard for retailers
+ * Shows active orders and quick actions
  */
 
 import { useState, useEffect } from 'react';
@@ -11,20 +12,32 @@ import {
     ShoppingCart,
     ClipboardList,
     ArrowRight,
+    Clock,
+    Truck,
+    CheckCircle,
+    CreditCard,
 } from 'lucide-react';
 import { Card } from '../../shared/ui/Card';
 import { Button } from '../../shared/ui/Button';
 import { useAuthStore } from '../auth/authstore';
+import { useCartStore } from '../cart/cartstore';
 import productsApi from '../products/productsapi';
+import ordersApi from '../orders/ordersapi';
 import type { Product } from '../products/productstypes';
+import type { Order } from '../orders/orderstypes';
+import { ORDER_STATUS_CONFIG } from '../orders/orderstypes';
 
 export function RetailerDashboard() {
     const { user } = useAuthStore();
+    const { itemCount, fetchCart } = useCartStore();
     const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+    const [recentOrders, setRecentOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchFeaturedProducts();
+        fetchRecentOrders();
+        fetchCart();
     }, []);
 
     const fetchFeaturedProducts = async () => {
@@ -38,7 +51,38 @@ export function RetailerDashboard() {
         }
     };
 
+    const fetchRecentOrders = async () => {
+        try {
+            const response = await ordersApi.getMyOrders(1, 3);
+            setRecentOrders(response.data || []);
+        } catch (error) {
+            console.error('Failed to fetch orders:', error);
+        }
+    };
+
     const basePath = `/dashboard/${user?.role || 'retailer'}`;
+
+    const statusIcons: Record<string, React.ReactNode> = {
+        pending_payment: <Clock size={14} className="text-yellow-600" />,
+        paid: <CreditCard size={14} className="text-blue-600" />,
+        accepted: <Package size={14} className="text-purple-600" />,
+        in_transit: <Truck size={14} className="text-indigo-600" />,
+        delivered: <CheckCircle size={14} className="text-green-600" />,
+    };
+
+    const statusColors: Record<string, string> = {
+        pending_payment: 'bg-yellow-100 text-yellow-700',
+        paid: 'bg-blue-100 text-blue-700',
+        accepted: 'bg-purple-100 text-purple-700',
+        in_transit: 'bg-indigo-100 text-indigo-700',
+        delivered: 'bg-green-100 text-green-700',
+        cancelled: 'bg-red-100 text-red-700',
+    };
+
+    // Check if there are any pending payment orders
+    const pendingPaymentOrders = recentOrders.filter(
+        o => o.status === 'pending_payment' && o.paymentStatus === 'pending'
+    );
 
     return (
         <div className="space-y-6">
@@ -46,9 +90,9 @@ export function RetailerDashboard() {
             <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white">
                 <div className="flex items-center gap-2 mb-2">
                     <img
-                    src="/logo-white.png"
-                    alt="Logo"
-                    className="w-6 h-6"
+                        src="/logo-white.png"
+                        alt="Logo"
+                        className="w-6 h-6"
                     />
                     <span className="text-green-200 text-sm">Jalaram Traders</span>
                 </div>
@@ -63,6 +107,32 @@ export function RetailerDashboard() {
                 </p>
             </div>
 
+            {/* Pending Payment Alert */}
+            {pendingPaymentOrders.length > 0 && (
+                <Link to={`/orders/${pendingPaymentOrders[0]._id}`}>
+                    <Card className="bg-yellow-50 border border-yellow-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg animate-pulse">
+                                    <CreditCard size={20} />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-yellow-800">
+                                        Complete your payment
+                                    </p>
+                                    <p className="text-sm text-yellow-600">
+                                        Order {pendingPaymentOrders[0].orderNumber} is awaiting payment
+                                    </p>
+                                </div>
+                            </div>
+                            <Button size="sm" variant="primary">
+                                Pay Now
+                            </Button>
+                        </div>
+                    </Card>
+                </Link>
+            )}
+
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-4">
                 <Link to={`${basePath}/products`}>
@@ -72,9 +142,14 @@ export function RetailerDashboard() {
                     </Card>
                 </Link>
                 <Link to={`${basePath}/cart`}>
-                    <Card hover className="text-center py-4">
+                    <Card hover className="text-center py-4 relative">
                         <ShoppingCart className="mx-auto text-green-600 mb-2" size={28} />
                         <span className="text-sm font-medium text-gray-700">Cart</span>
+                        {itemCount > 0 && (
+                            <span className="absolute top-2 right-2 w-5 h-5 bg-green-600 text-white text-xs flex items-center justify-center rounded-full">
+                                {itemCount}
+                            </span>
+                        )}
                     </Card>
                 </Link>
                 <Link to={`${basePath}/orders`}>
@@ -85,17 +160,47 @@ export function RetailerDashboard() {
                 </Link>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-4">
-                <Card>
-                    <p className="text-gray-500 text-sm">This Month's Orders</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">0</p>
-                </Card>
-                <Card>
-                    <p className="text-gray-500 text-sm">Total Spent</p>
-                    <p className="text-2xl font-bold text-green-600 mt-1">₹0</p>
-                </Card>
-            </div>
+            {/* Recent Orders */}
+            {recentOrders.length > 0 && (
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
+                        <Link
+                            to={`${basePath}/orders`}
+                            className="text-green-600 text-sm font-medium flex items-center gap-1 hover:text-green-700"
+                        >
+                            View All <ArrowRight size={16} />
+                        </Link>
+                    </div>
+
+                    <div className="space-y-3">
+                        {recentOrders.map((order) => (
+                            <Link key={order._id} to={`/orders/${order._id}`}>
+                                <Card hover padding="sm">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-lg ${statusColors[order.status]?.replace('text-', 'bg-').replace('-700', '-100') || 'bg-gray-100'}`}>
+                                                {statusIcons[order.status] || <Package size={14} />}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{order.orderNumber}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    {order.items.length} items • ₹{order.totalAmount.toFixed(0)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-700'}`}>
+                                                {ORDER_STATUS_CONFIG[order.status]?.label || order.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Featured Products */}
             <div>

@@ -5,7 +5,7 @@
  */
 
 import apiClient from '../../shared/apiClient';
-import type { LoginRequest, RegisterRequest, AuthResponse, ProfileResponse } from './authtypes';
+import type { LoginRequest, RegisterRequest, AuthResponse, ProfileResponse, GoogleLoginRequest } from './authtypes';
 
 export const authApi = {
     /**
@@ -13,6 +13,14 @@ export const authApi = {
      */
     login: async (data: LoginRequest): Promise<AuthResponse> => {
         const response = await apiClient.post<AuthResponse>('/auth/login', data);
+        return response.data;
+    },
+
+    /**
+     * Login with Google OAuth
+     */
+    googleLogin: async (data: GoogleLoginRequest): Promise<AuthResponse> => {
+        const response = await apiClient.post<AuthResponse>('/auth/google', data);
         return response.data;
     },
 

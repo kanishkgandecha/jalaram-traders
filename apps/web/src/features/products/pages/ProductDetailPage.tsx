@@ -9,12 +9,15 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Package, Minus, Plus, ShoppingCart, Truck, Shield, Tag } from 'lucide-react';
 import { Card } from '../../../shared/ui/Card';
 import { Button } from '../../../shared/ui/Button';
+import { useAuthStore } from '../../auth/authstore';
 import productsApi from '../productsapi';
 import { cartApi } from '../../cart/cartapi';
 import type { Product, PriceCalculation } from '../productstypes';
 
 export function ProductDetailPage() {
     const { id } = useParams<{ id: string }>();
+    const { user } = useAuthStore();
+    const basePath = `/dashboard/${user?.role || 'retailer'}`;
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
@@ -29,7 +32,7 @@ export function ProductDetailPage() {
     }, [id]);
 
     useEffect(() => {
-        if (product && quantity >= product.minOrderQuantity) {
+        if (product && quantity >= (product.minOrderQuantity || 1)) {
             calculatePrice();
         }
     }, [quantity, product]);
@@ -38,7 +41,7 @@ export function ProductDetailPage() {
         try {
             const response = await productsApi.getById(id!);
             setProduct(response.data.product);
-            setQuantity(response.data.product.minOrderQuantity);
+            setQuantity(response.data.product.minOrderQuantity || 1);
         } catch (error) {
             console.error('Failed to fetch product:', error);
         } finally {
@@ -73,13 +76,13 @@ export function ProductDetailPage() {
     const incrementQuantity = () => {
         if (!product) return;
         if (product.maxOrderQuantity && quantity >= product.maxOrderQuantity) return;
-        if (quantity >= product.stock) return;
+        if (quantity >= (product.stockAvailable ?? (product.stockTotal - product.stockReserved))) return;
         setQuantity(quantity + 1);
     };
 
     const decrementQuantity = () => {
         if (!product) return;
-        if (quantity <= product.minOrderQuantity) return;
+        if (quantity <= (product.minOrderQuantity || 1)) return;
         setQuantity(quantity - 1);
     };
 
@@ -101,7 +104,7 @@ export function ProductDetailPage() {
             <div className="px-4 py-8 text-center">
                 <Package className="mx-auto text-gray-300 mb-4" size={64} />
                 <h2 className="text-xl font-semibold text-gray-900">Product not found</h2>
-                <Link to="/products" className="text-green-600 hover:underline mt-2 inline-block">
+                <Link to={`${basePath}/products`} className="text-green-600 hover:underline mt-2 inline-block">
                     Browse products
                 </Link>
             </div>
@@ -112,7 +115,7 @@ export function ProductDetailPage() {
         <div className="px-4 py-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
             {/* Back Link */}
             <Link
-                to="/products"
+                to={`${basePath}/products`}
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 mb-4"
             >
                 <ArrowLeft size={20} />
@@ -166,7 +169,7 @@ export function ProductDetailPage() {
                     </div>
 
                     {/* Bulk Pricing Tiers */}
-                    {product.bulkPricing.length > 0 && (
+                    {product.bulkPricing?.length > 0 && (
                         <Card padding="sm">
                             <div className="flex items-center gap-2 mb-3">
                                 <Tag size={18} className="text-green-600" />
@@ -190,12 +193,12 @@ export function ProductDetailPage() {
                     {/* Quantity Selector */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Quantity (Min: {product.minOrderQuantity} {product.unit})
+                            Quantity (Min: {product.minOrderQuantity || 1} {product.unit})
                         </label>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={decrementQuantity}
-                                disabled={quantity <= product.minOrderQuantity}
+                                disabled={quantity <= (product.minOrderQuantity || 1)}
                                 className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                             >
                                 <Minus size={20} />
@@ -203,12 +206,12 @@ export function ProductDetailPage() {
                             <input
                                 type="number"
                                 value={quantity}
-                                onChange={(e) => setQuantity(Math.max(product.minOrderQuantity, parseInt(e.target.value) || 1))}
+                                onChange={(e) => setQuantity(Math.max(product.minOrderQuantity || 1, parseInt(e.target.value) || 1))}
                                 className="w-24 text-center py-2 border border-gray-300 rounded-lg"
                             />
                             <button
                                 onClick={incrementQuantity}
-                                disabled={quantity >= product.stock}
+                                disabled={quantity >= (product.stockAvailable ?? (product.stockTotal - product.stockReserved))}
                                 className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                             >
                                 <Plus size={20} />
@@ -221,21 +224,21 @@ export function ProductDetailPage() {
                         <div className="bg-green-50 rounded-xl p-4">
                             <div className="flex justify-between mb-2">
                                 <span className="text-gray-600">Subtotal</span>
-                                <span className="font-medium">₹{priceData.subtotal.toFixed(2)}</span>
+                                <span className="font-medium">₹{(priceData.subtotal ?? 0).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between mb-2">
-                                <span className="text-gray-600">GST ({priceData.gstRate}%)</span>
-                                <span className="font-medium">₹{priceData.gstAmount.toFixed(2)}</span>
+                                <span className="text-gray-600">GST ({priceData.gstRate ?? 0}%)</span>
+                                <span className="font-medium">₹{(priceData.gstAmount ?? 0).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between pt-2 border-t border-green-200">
                                 <span className="font-semibold">Total</span>
                                 <span className="font-bold text-green-600 text-lg">
-                                    ₹{priceData.total.toFixed(2)}
+                                    ₹{(priceData.total ?? 0).toFixed(2)}
                                 </span>
                             </div>
-                            {priceData.savings > 0 && (
+                            {(priceData.savings ?? 0) > 0 && (
                                 <p className="text-sm text-green-600 mt-2">
-                                    You save ₹{priceData.savings.toFixed(2)} with bulk pricing!
+                                    You save ₹{(priceData.savings ?? 0).toFixed(2)} with bulk pricing!
                                 </p>
                             )}
                         </div>
@@ -247,10 +250,10 @@ export function ProductDetailPage() {
                         size="lg"
                         onClick={handleAddToCart}
                         isLoading={addingToCart}
-                        disabled={product.stock === 0}
+                        disabled={(product.stockAvailable ?? (product.stockTotal - product.stockReserved)) === 0}
                         leftIcon={<ShoppingCart size={20} />}
                     >
-                        {addedToCart ? 'Added to Cart!' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                        {addedToCart ? 'Added to Cart!' : (product.stockAvailable ?? (product.stockTotal - product.stockReserved)) === 0 ? 'Out of Stock' : 'Add to Cart'}
                     </Button>
 
                     {/* Features */}

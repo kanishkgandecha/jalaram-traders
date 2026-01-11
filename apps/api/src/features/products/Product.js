@@ -97,7 +97,6 @@ const productSchema = new mongoose.Schema(
         // This is the primary price used for B2B wholesale orders
         wholesalePrice: {
             type: Number,
-            required: [true, 'Wholesale price is required'],
             min: [0, 'Price cannot be negative'],
         },
 
@@ -281,6 +280,14 @@ productSchema.pre('save', function () {
         // Add random suffix to make unique
         this.slug += '-' + Date.now().toString(36);
     }
+
+    // Sync wholesalePrice and basePrice for backwards compatibility
+    if (!this.wholesalePrice && this.basePrice) {
+        this.wholesalePrice = this.basePrice;
+    }
+    if (!this.basePrice && this.wholesalePrice) {
+        this.basePrice = this.wholesalePrice;
+    }
 });
 
 // ==========================================
@@ -293,39 +300,51 @@ productSchema.pre('save', function () {
  * @returns {Object} Price details
  */
 productSchema.methods.calculatePrice = function (quantity) {
+    // Primary: wholesalePrice (for retailers)
+    // Fallback: basePrice (legacy support)
+    const effectivePrice = this.wholesalePrice || this.basePrice || 0;
+    const gstRate = this.gstRate || 18;
+
     // Sort bulk pricing by minQuantity descending to find the best tier
-    const sortedTiers = [...this.bulkPricing].sort((a, b) => b.minQuantity - a.minQuantity);
+    const sortedTiers = [...(this.bulkPricing || [])].sort((a, b) => b.minQuantity - a.minQuantity);
 
     // Find applicable tier
     const applicableTier = sortedTiers.find(
         (tier) => quantity >= tier.minQuantity && (tier.maxQuantity === null || quantity <= tier.maxQuantity)
     );
 
-    let pricePerUnit = this.basePrice;
+    let pricePerUnit = effectivePrice;
     let discountPercent = 0;
     let tierApplied = 'base';
 
     if (applicableTier) {
         pricePerUnit = applicableTier.pricePerUnit;
-        discountPercent = applicableTier.discountPercent;
+        discountPercent = applicableTier.discountPercent || 0;
         tierApplied = `${applicableTier.minQuantity}+ units`;
     }
 
     const subtotal = pricePerUnit * quantity;
-    const gstAmount = (subtotal * this.gstRate) / 100;
+    const gstAmount = (subtotal * gstRate) / 100;
     const total = subtotal + gstAmount;
 
     return {
         pricePerUnit,
         quantity,
         subtotal,
-        gstRate: this.gstRate,
+        gstRate,
         gstAmount,
         total,
         discountPercent,
         tierApplied,
-        savings: (this.basePrice - pricePerUnit) * quantity,
+        savings: (effectivePrice - pricePerUnit) * quantity,
     };
+
+    // TODO: Future - Farmer/Retail checkout
+    // For farmers, use retailMRP instead of wholesalePrice
+    // const retailPrice = this.retailMRP;
+    // if (this.pricingMode === 'WHOLESALE_AND_RETAIL' && retailPrice) {
+    //     ...calculate retail pricing...
+    // }
 };
 
 /**

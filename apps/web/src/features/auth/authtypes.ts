@@ -8,9 +8,12 @@ export interface User {
     _id: string;
     name: string;
     email: string;
-    phone: string;
+    phone?: string; // Optional for Google auth users
     role: 'admin' | 'employee' | 'retailer' | 'farmer';
     isActive: boolean;
+    profileImage?: string;
+    authProvider?: 'local' | 'google';
+    googleId?: string;
     businessName?: string;
     gstin?: string;
     address?: {
@@ -29,6 +32,10 @@ export interface User {
 export interface LoginRequest {
     identifier: string; // email or phone
     password: string;
+}
+
+export interface GoogleLoginRequest {
+    idToken: string;
 }
 
 export interface RegisterRequest {

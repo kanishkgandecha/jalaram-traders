@@ -66,8 +66,32 @@ export const productsApi = {
     calculatePrice: async (
         productId: string,
         quantity: number
-    ): Promise<{ data: { pricing: PriceCalculation } }> => {
+    ): Promise<{ success: boolean; data: { pricing: PriceCalculation } }> => {
         const response = await apiClient.post(`/products/${productId}/calculate-price`, { quantity });
+        return response.data;
+    },
+
+    /**
+     * Create new product (Admin, Employee)
+     */
+    createProduct: async (payload: Partial<Product>): Promise<ProductResponse> => {
+        const response = await apiClient.post<ProductResponse>('/products', payload);
+        return response.data;
+    },
+
+    /**
+     * Update existing product (Admin, Employee)
+     */
+    updateProduct: async (id: string, payload: Partial<Product>): Promise<ProductResponse> => {
+        const response = await apiClient.put<ProductResponse>(`/products/${id}`, payload);
+        return response.data;
+    },
+
+    /**
+     * Delete product - soft delete (Admin only)
+     */
+    deleteProduct: async (id: string): Promise<{ success: boolean; message: string }> => {
+        const response = await apiClient.delete(`/products/${id}`);
         return response.data;
     },
 };

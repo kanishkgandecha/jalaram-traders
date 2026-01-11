@@ -1,30 +1,40 @@
 /**
  * Order History Page
  * ===================
- * List of user's past orders
+ * List of user's past orders with new status flow
  */
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardList, Package, ChevronRight, Clock, CheckCircle, XCircle, Truck } from 'lucide-react';
+import {
+    ClipboardList,
+    Package,
+    ChevronRight,
+    Clock,
+    CheckCircle,
+    XCircle,
+    Truck,
+    CreditCard,
+} from 'lucide-react';
 import { Card } from '../../../shared/ui/Card';
 import { Button } from '../../../shared/ui/Button';
+import { useAuthStore } from '../../auth/authstore';
 import ordersApi from '../ordersapi';
 import type { Order } from '../orderstypes';
+import { ORDER_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '../orderstypes';
 
-const statusConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-    pending: { icon: <Clock size={16} />, color: 'text-yellow-600 bg-yellow-50', label: 'Pending' },
-    confirmed: { icon: <CheckCircle size={16} />, color: 'text-blue-600 bg-blue-50', label: 'Confirmed' },
-    processing: { icon: <Package size={16} />, color: 'text-blue-600 bg-blue-50', label: 'Processing' },
-    packed: { icon: <Package size={16} />, color: 'text-purple-600 bg-purple-50', label: 'Packed' },
-    shipped: { icon: <Truck size={16} />, color: 'text-indigo-600 bg-indigo-50', label: 'Shipped' },
-    out_for_delivery: { icon: <Truck size={16} />, color: 'text-green-600 bg-green-50', label: 'Out for Delivery' },
-    delivered: { icon: <CheckCircle size={16} />, color: 'text-green-600 bg-green-50', label: 'Delivered' },
-    cancelled: { icon: <XCircle size={16} />, color: 'text-red-600 bg-red-50', label: 'Cancelled' },
-    returned: { icon: <XCircle size={16} />, color: 'text-gray-600 bg-gray-50', label: 'Returned' },
+const statusIcons: Record<string, React.ReactNode> = {
+    pending_payment: <Clock size={16} />,
+    paid: <CreditCard size={16} />,
+    accepted: <Package size={16} />,
+    in_transit: <Truck size={16} />,
+    delivered: <CheckCircle size={16} />,
+    cancelled: <XCircle size={16} />,
 };
 
 export function OrderHistoryPage() {
+    const { user } = useAuthStore();
+    const basePath = `/dashboard/${user?.role || 'retailer'}`;
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -86,28 +96,44 @@ export function OrderHistoryPage() {
                     <p className="text-gray-500 mt-1 mb-6">
                         Your order history will appear here
                     </p>
-                    <Link to="/products">
+                    <Link to={`${basePath}/products`}>
                         <Button>Start Shopping</Button>
                     </Link>
                 </div>
             ) : (
                 <div className="space-y-4">
                     {orders.map((order) => {
-                        const status = statusConfig[order.status];
+                        const statusConfig = ORDER_STATUS_CONFIG[order.status] || {
+                            label: order.status,
+                            color: 'text-gray-600',
+                            bgColor: 'bg-gray-50',
+                        };
+                        const paymentConfig = PAYMENT_STATUS_CONFIG[order.paymentStatus] || {
+                            label: order.paymentStatus,
+                            color: 'text-gray-600',
+                            bgColor: 'bg-gray-50',
+                        };
+
                         return (
-                            <Link key={order._id} to={`/orders/${order._id}`}>
+                            <Link key={order._id} to={`${basePath}/orders/${order._id}`}>
                                 <Card hover padding="sm">
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
-                                            {/* Order Number & Date */}
-                                            <div className="flex items-center gap-3 mb-2">
+                                            {/* Order Number & Status */}
+                                            <div className="flex flex-wrap items-center gap-2 mb-2">
                                                 <span className="font-semibold text-gray-900">
                                                     {order.orderNumber}
                                                 </span>
-                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
-                                                    {status.icon}
-                                                    {status.label}
+                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
+                                                    {statusIcons[order.status]}
+                                                    {statusConfig.label}
                                                 </span>
+                                                {order.paymentStatus !== 'confirmed' && (
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${paymentConfig.bgColor} ${paymentConfig.color}`}>
+                                                        <CreditCard size={12} />
+                                                        {paymentConfig.label}
+                                                    </span>
+                                                )}
                                             </div>
 
                                             {/* Date & Items */}
@@ -119,6 +145,20 @@ export function OrderHistoryPage() {
                                             <p className="text-sm text-gray-600 mt-2 line-clamp-1">
                                                 {order.items.map(item => item.productSnapshot.name).join(', ')}
                                             </p>
+
+                                            {/* Show action hint for pending payment */}
+                                            {order.status === 'pending_payment' && order.paymentStatus === 'pending' && (
+                                                <p className="text-xs text-yellow-600 mt-2 flex items-center gap-1">
+                                                    <Clock size={12} />
+                                                    Click to complete payment
+                                                </p>
+                                            )}
+                                            {order.status === 'pending_payment' && order.paymentStatus === 'submitted' && (
+                                                <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                                                    <Clock size={12} />
+                                                    Payment verification in progress
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Total & Arrow */}

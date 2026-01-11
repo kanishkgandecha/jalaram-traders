@@ -32,10 +32,10 @@ apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Clear token and redirect to login
+            // Clear token - route guards will handle redirect
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            localStorage.removeItem('auth-storage'); // Clear zustand persisted state
         }
         return Promise.reject(error);
     }

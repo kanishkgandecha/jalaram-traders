@@ -10,9 +10,12 @@ import { ShoppingCart, Trash2, Minus, Plus, ArrowRight, Package } from 'lucide-r
 import { Card } from '../../../shared/ui/Card';
 import { Button } from '../../../shared/ui/Button';
 import { useCartStore } from '../cartstore';
+import { useAuthStore } from '../../auth/authstore';
 
 export function CartPage() {
     const navigate = useNavigate();
+    const { user } = useAuthStore();
+    const basePath = `/dashboard/${user?.role || 'retailer'}`;
     const { cart, isLoading, fetchCart, updateQuantity, removeItem, clearCart } = useCartStore();
 
     useEffect(() => {
@@ -71,7 +74,7 @@ export function CartPage() {
                     <p className="text-gray-500 mt-1 mb-6">
                         Add some products to get started
                     </p>
-                    <Link to="/products">
+                    <Link to={`${basePath}/products`}>
                         <Button>Browse Products</Button>
                     </Link>
                 </div>
@@ -84,7 +87,7 @@ export function CartPage() {
                                 <div className="flex gap-4">
                                     {/* Product Image */}
                                     <Link
-                                        to={`/products/${item.product._id}`}
+                                        to={`${basePath}/products/${item.product._id}`}
                                         className="w-20 h-20 sm:w-24 sm:h-24 bg-green-50 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden"
                                     >
                                         {item.product.images?.[0] ? (
@@ -101,7 +104,7 @@ export function CartPage() {
                                     {/* Product Info */}
                                     <div className="flex-1 min-w-0">
                                         <Link
-                                            to={`/products/${item.product._id}`}
+                                            to={`${basePath}/products/${item.product._id}`}
                                             className="font-medium text-gray-900 hover:text-green-600 line-clamp-2"
                                         >
                                             {item.product.name}
@@ -186,14 +189,14 @@ export function CartPage() {
                                 fullWidth
                                 size="lg"
                                 className="mt-6"
-                                onClick={() => navigate('/checkout')}
+                                onClick={() => navigate(`${basePath}/checkout`)}
                                 rightIcon={<ArrowRight size={20} />}
                             >
                                 Proceed to Checkout
                             </Button>
 
                             <Link
-                                to="/products"
+                                to={`${basePath}/products`}
                                 className="block text-center text-green-600 hover:text-green-700 mt-4 text-sm"
                             >
                                 Continue Shopping

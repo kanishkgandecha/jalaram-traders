@@ -21,21 +21,21 @@ const { authorize } = require('../../shared/middleware/rolemiddleware');
  * @desc    Get featured products
  * @access  Public
  */
-router.get('/featured', productsController.getFeaturedProducts);
+router.get('/featured', optionalAuth, productsController.getFeaturedProducts);
 
 /**
  * @route   GET /api/v1/products/category/:category
  * @desc    Get products by category
  * @access  Public
  */
-router.get('/category/:category', productsController.getProductsByCategory);
+router.get('/category/:category', optionalAuth, productsController.getProductsByCategory);
 
 /**
  * @route   GET /api/v1/products/slug/:slug
  * @desc    Get product by slug
  * @access  Public
  */
-router.get('/slug/:slug', productsController.getProductBySlug);
+router.get('/slug/:slug', optionalAuth, productsController.getProductBySlug);
 
 // ==========================================
 // PROTECTED ROUTES (Admin/Employee) - BEFORE generic /:id
@@ -118,7 +118,7 @@ router.delete(
  * @desc    Calculate price with bulk discounts
  * @access  Public
  */
-router.post('/:id/calculate-price', productsController.calculatePrice);
+router.post('/:id/calculate-price', optionalAuth, productsController.calculatePrice);
 
 // ==========================================
 // GENERIC PUBLIC ROUTES (must be LAST)
@@ -129,14 +129,14 @@ router.post('/:id/calculate-price', productsController.calculatePrice);
  * @desc    Get all products with filtering
  * @access  Public
  */
-router.get('/', productsController.getAllProducts);
+router.get('/', optionalAuth, productsController.getAllProducts);
 
 /**
  * @route   GET /api/v1/products/:id
  * @desc    Get product by ID
  * @access  Public
  */
-router.get('/:id', productsController.getProductById);
+router.get('/:id', optionalAuth, productsController.getProductById);
 
 module.exports = router;
 

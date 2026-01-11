@@ -1,9 +1,3 @@
-/**
- * Button Component
- * =================
- * Reusable button with variants
- */
-
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 

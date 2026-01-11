@@ -2,6 +2,7 @@
  * Admin Dashboard
  * ================
  * Admin overview with stats, charts, and quick actions
+ * Includes order management shortcuts and pending payment alerts
  */
 
 import { useState, useEffect } from 'react';
@@ -13,9 +14,17 @@ import {
     ShoppingCart,
     DollarSign,
     AlertTriangle,
+    Clock,
+    CheckCircle,
+    Truck,
+    CreditCard,
+    Boxes,
 } from 'lucide-react';
 import { Card } from '../../shared/ui/Card';
+import { Button } from '../../shared/ui/Button';
 import adminApi, { type DashboardStats } from './adminapi';
+import ordersApi from '../orders/ordersapi';
+import { ORDER_STATUS_CONFIG } from '../orders/orderstypes';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -35,20 +44,22 @@ const formatDate = (date: string) => {
 };
 
 const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    confirmed: 'bg-blue-100 text-blue-700',
-    processing: 'bg-purple-100 text-purple-700',
-    shipped: 'bg-indigo-100 text-indigo-700',
+    pending_payment: 'bg-yellow-100 text-yellow-700',
+    paid: 'bg-blue-100 text-blue-700',
+    accepted: 'bg-purple-100 text-purple-700',
+    in_transit: 'bg-indigo-100 text-indigo-700',
     delivered: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-700',
 };
 
 export function AdminDashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [pendingPaymentCount, setPendingPaymentCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchStats();
+        fetchPendingPayments();
     }, []);
 
     const fetchStats = async () => {
@@ -59,6 +70,15 @@ export function AdminDashboard() {
             console.error('Failed to fetch stats:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchPendingPayments = async () => {
+        try {
+            const response = await ordersApi.getPendingPaymentOrders(1, 1);
+            setPendingPaymentCount(response.meta.pagination.total);
+        } catch (error) {
+            console.error('Failed to fetch pending payments:', error);
         }
     };
 
@@ -84,6 +104,32 @@ export function AdminDashboard() {
                 <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
                 <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
             </div>
+
+            {/* Pending Payment Alert */}
+            {pendingPaymentCount > 0 && (
+                <Link to="/dashboard/admin/orders?paymentStatus=submitted">
+                    <Card className="bg-yellow-50 border border-yellow-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-yellow-100 text-yellow-600 rounded-xl">
+                                    <CreditCard size={24} />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-yellow-800">
+                                        {pendingPaymentCount} Payment{pendingPaymentCount > 1 ? 's' : ''} Awaiting Confirmation
+                                    </p>
+                                    <p className="text-sm text-yellow-600">
+                                        Click to review and confirm pending payments
+                                    </p>
+                                </div>
+                            </div>
+                            <Button size="sm" variant="primary">
+                                Review Now
+                            </Button>
+                        </div>
+                    </Card>
+                </Link>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -164,15 +210,33 @@ export function AdminDashboard() {
             </div>
 
             {/* Quick Links */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+                <Link
+                    to="/dashboard/admin/orders"
+                    className="bg-white rounded-xl p-4 flex items-center gap-3 hover:shadow-md transition-shadow"
+                >
+                    <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                        <ShoppingCart size={20} />
+                    </div>
+                    <span className="font-medium text-gray-900">Manage Orders</span>
+                </Link>
+                <Link
+                    to="/dashboard/admin/inventory"
+                    className="bg-white rounded-xl p-4 flex items-center gap-3 hover:shadow-md transition-shadow"
+                >
+                    <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+                        <Boxes size={20} />
+                    </div>
+                    <span className="font-medium text-gray-900">Inventory</span>
+                </Link>
                 <Link
                     to="/dashboard/admin/products"
                     className="bg-white rounded-xl p-4 flex items-center gap-3 hover:shadow-md transition-shadow"
                 >
-                    <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+                    <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
                         <Package size={20} />
                     </div>
-                    <span className="font-medium text-gray-900">Manage Products</span>
+                    <span className="font-medium text-gray-900">Products</span>
                 </Link>
                 <Link
                     to="/dashboard/admin/users"
@@ -181,16 +245,7 @@ export function AdminDashboard() {
                     <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
                         <Users size={20} />
                     </div>
-                    <span className="font-medium text-gray-900">Manage Users</span>
-                </Link>
-                <Link
-                    to="/dashboard/admin/orders"
-                    className="bg-white rounded-xl p-4 flex items-center gap-3 hover:shadow-md transition-shadow"
-                >
-                    <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                        <ShoppingCart size={20} />
-                    </div>
-                    <span className="font-medium text-gray-900">View Orders</span>
+                    <span className="font-medium text-gray-900">Users</span>
                 </Link>
                 <Link
                     to="/dashboard/admin/reports"
@@ -199,7 +254,7 @@ export function AdminDashboard() {
                     <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
                         <TrendingUp size={20} />
                     </div>
-                    <span className="font-medium text-gray-900">Sales Reports</span>
+                    <span className="font-medium text-gray-900">Reports</span>
                 </Link>
             </div>
 
@@ -230,8 +285,13 @@ export function AdminDashboard() {
                             <tbody className="divide-y divide-gray-50">
                                 {stats.recentOrders.map((order) => (
                                     <tr key={order._id} className="hover:bg-gray-50">
-                                        <td className="py-3 font-medium text-gray-900">
-                                            {order.orderNumber}
+                                        <td className="py-3">
+                                            <Link
+                                                to={`/orders/${order._id}`}
+                                                className="font-medium text-green-600 hover:text-green-700"
+                                            >
+                                                {order.orderNumber}
+                                            </Link>
                                         </td>
                                         <td className="py-3 text-gray-600">
                                             {order.user?.name || 'N/A'}
@@ -244,7 +304,7 @@ export function AdminDashboard() {
                                                 className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-700'
                                                     }`}
                                             >
-                                                {order.status}
+                                                {ORDER_STATUS_CONFIG[order.status]?.label || order.status}
                                             </span>
                                         </td>
                                         <td className="py-3 text-gray-500 text-sm">

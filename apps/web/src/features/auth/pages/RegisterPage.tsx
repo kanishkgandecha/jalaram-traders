@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Leaf, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import {  Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '../../../shared/ui/Button';
 import { Input } from '../../../shared/ui/Input';
 import { useAuthStore } from '../authstore';
@@ -84,7 +84,11 @@ export function RegisterPage() {
                 {/* Logo */}
                 <div className="text-center mb-6">
                     <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-lg mb-3">
-                        <Leaf className="text-white" size={28} />
+                       <img
+  src="/logo-white.png"
+  alt="Logo"
+  className="w-6 h-6"
+/>
                     </div>
                     <h1 className="text-xl font-bold text-gray-900">Create Account</h1>
                 </div>
