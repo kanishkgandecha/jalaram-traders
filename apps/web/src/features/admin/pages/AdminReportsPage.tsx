@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import {
     TrendingUp,
     Download,
-    DollarSign,
+    IndianRupee,
     ShoppingCart,
     Package,
 } from 'lucide-react';
@@ -153,7 +153,7 @@ export function AdminReportsPage() {
                             </p>
                         </div>
                         <div className="p-3 bg-green-100 text-green-600 rounded-xl">
-                            <DollarSign size={24} />
+                            <IndianRupee size={24} />
                         </div>
                     </div>
                 </Card>

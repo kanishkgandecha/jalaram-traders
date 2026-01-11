@@ -5,8 +5,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Filter, Package, ShoppingCart } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Search, Package } from 'lucide-react';
 import { Card } from '../../../shared/ui/Card';
 import { Button } from '../../../shared/ui/Button';
 import { useAuthStore } from '../../auth/authstore';
@@ -25,16 +25,26 @@ const categories = [
 export function ProductListPage() {
     const { user } = useAuthStore();
     const basePath = `/dashboard/${user?.role || 'retailer'}`;
+    const [searchParams] = useSearchParams();
 
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState<ProductFilters>({
+    const [filters, setFilters] = useState<ProductFilters>(() => ({
         page: 1,
         limit: 12,
-        category: '',
-        search: '',
-    });
+        category: searchParams.get('category') || '',
+        search: searchParams.get('search') || '',
+    }));
     const [totalPages, setTotalPages] = useState(1);
+
+    // Sync filters with URL params
+    useEffect(() => {
+        const urlSearch = searchParams.get('search') || '';
+        const urlCategory = searchParams.get('category') || '';
+        if (urlSearch !== filters.search || urlCategory !== filters.category) {
+            setFilters(f => ({ ...f, search: urlSearch, category: urlCategory, page: 1 }));
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         fetchProducts();
@@ -153,7 +163,7 @@ export function ProductListPage() {
                                         </span>
                                         <span className="text-sm text-gray-500">/{product.unit}</span>
                                     </div>
-                                    {product.stock <= product.lowStockThreshold && product.stock > 0 && (
+                                    {(product.stock ?? product.stockTotal ?? 0) <= (product.lowStockThreshold ?? 10) && (product.stock ?? product.stockTotal ?? 0) > 0 && (
                                         <span className="text-xs text-orange-600 font-medium">Low Stock</span>
                                     )}
                                     {product.stock === 0 && (

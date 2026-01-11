@@ -33,7 +33,8 @@ const getSalesReport = async (req, res) => {
     try {
         const { startDate, endDate, groupBy = 'day' } = req.query;
         const report = await adminService.getSalesReport({ startDate, endDate, groupBy });
-        sendSuccess(res, 200, 'Sales report retrieved successfully', { report });
+        // Send report directly (frontend expects response.data to be the SalesReport)
+        sendSuccess(res, 200, 'Sales report retrieved successfully', report);
     } catch (error) {
         console.error('Get sales report error:', error);
         sendError(res, error.statusCode || 500, error.message);
@@ -48,7 +49,7 @@ const getSalesReport = async (req, res) => {
 const getInventoryReport = async (req, res) => {
     try {
         const report = await adminService.getInventoryReport();
-        sendSuccess(res, 200, 'Inventory report retrieved successfully', { report });
+        sendSuccess(res, 200, 'Inventory report retrieved successfully', report);
     } catch (error) {
         console.error('Get inventory report error:', error);
         sendError(res, error.statusCode || 500, error.message);

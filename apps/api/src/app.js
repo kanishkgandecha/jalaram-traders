@@ -21,6 +21,7 @@ const paymentsRoutes = require('./features/payments/paymentsroutes');
 const adminRoutes = require('./features/admin/adminroutes');
 const inventoryRoutes = require('./features/inventory/inventoryroutes');
 const profileRoutes = require('./features/profile/profileroutes');
+const notificationsRoutes = require('./features/notifications/notificationsroutes');
 
 // Initialize Express app
 const app = express();
@@ -75,6 +76,7 @@ app.use(`${API_PREFIX}/payments`, paymentsRoutes);
 app.use(`${API_PREFIX}/admin`, adminRoutes);
 app.use(`${API_PREFIX}/inventory`, inventoryRoutes);
 app.use(`${API_PREFIX}/profile`, profileRoutes);
+app.use(`${API_PREFIX}/notifications`, notificationsRoutes);
 
 // ==========================================
 // ERROR HANDLING

@@ -12,7 +12,7 @@ import {
     Users,
     Package,
     ShoppingCart,
-    DollarSign,
+    IndianRupee,
     AlertTriangle,
     Clock,
     CheckCircle,
@@ -107,7 +107,7 @@ export function AdminDashboard() {
 
             {/* Pending Payment Alert */}
             {pendingPaymentCount > 0 && (
-                <Link to="/dashboard/admin/orders?paymentStatus=submitted">
+                <Link to="/dashboard/admin/orders?paymentStatus=submitted" className="block mb-2">
                     <Card className="bg-yellow-50 border border-yellow-200 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -146,7 +146,7 @@ export function AdminDashboard() {
                             </p>
                         </div>
                         <div className="p-3 bg-white/20 rounded-xl">
-                            <DollarSign size={24} />
+                            <IndianRupee size={24} />
                         </div>
                     </div>
                 </Card>

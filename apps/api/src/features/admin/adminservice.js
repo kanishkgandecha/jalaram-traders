@@ -53,16 +53,16 @@ const getRecentOrders = async () => {
     const orders = await Order.find()
         .sort({ createdAt: -1 })
         .limit(5)
-        .populate('userId', 'name email')
-        .select('orderNumber status createdAt totals');
+        .populate('user', 'name email')
+        .select('orderNumber status createdAt totalAmount user');
 
     return orders.map((o) => ({
         _id: o._id,
         orderNumber: o.orderNumber,
-        totalAmount: o.totals?.grandTotal || 0,
+        totalAmount: o.totalAmount || 0,
         status: o.status,
         createdAt: o.createdAt,
-        user: o.userId ? { name: o.userId.name, email: o.userId.email } : null,
+        user: o.user ? { name: o.user.name, email: o.user.email } : null,
     }));
 };
 
@@ -146,7 +146,7 @@ const getOrderStats = async () => {
                         $group: {
                             _id: null,
                             total: { $sum: 1 },
-                            totalRevenue: { $sum: '$totals.grandTotal' },
+                            totalRevenue: { $sum: '$totalAmount' },
                         },
                     },
                 ],
@@ -156,7 +156,7 @@ const getOrderStats = async () => {
                         $group: {
                             _id: null,
                             count: { $sum: 1 },
-                            revenue: { $sum: '$totals.grandTotal' },
+                            revenue: { $sum: '$totalAmount' },
                         },
                     },
                 ],
@@ -166,7 +166,7 @@ const getOrderStats = async () => {
                         $group: {
                             _id: null,
                             count: { $sum: 1 },
-                            revenue: { $sum: '$totals.grandTotal' },
+                            revenue: { $sum: '$totalAmount' },
                         },
                     },
                 ],
@@ -303,6 +303,9 @@ const getSalesReport = async ({ startDate, endDate, groupBy }) => {
  * @returns {Promise<Object>} Inventory report
  */
 const getInventoryReport = async () => {
+    // Use $ifNull to fallback to basePrice for legacy products
+    const priceField = { $ifNull: ['$wholesalePrice', '$basePrice'] };
+
     const [byCategory, lowStock, topValue] = await Promise.all([
         Product.aggregate([
             { $match: { isActive: true } },
@@ -311,7 +314,7 @@ const getInventoryReport = async () => {
                     _id: '$category',
                     count: { $sum: 1 },
                     totalStock: { $sum: '$stockTotal' },
-                    totalValue: { $sum: { $multiply: ['$stockTotal', '$wholesalePrice'] } },
+                    totalValue: { $sum: { $multiply: ['$stockTotal', priceField] } },
                 },
             },
         ]),
@@ -330,12 +333,13 @@ const getInventoryReport = async () => {
             { $match: { isActive: true } },
             {
                 $addFields: {
-                    totalValue: { $multiply: ['$stockTotal', '$wholesalePrice'] },
+                    effectivePrice: priceField,
+                    totalValue: { $multiply: ['$stockTotal', priceField] },
                 },
             },
             { $sort: { totalValue: -1 } },
             { $limit: 10 },
-            { $project: { name: 1, stockTotal: 1, wholesalePrice: 1, totalValue: 1 } },
+            { $project: { name: 1, stockTotal: 1, effectivePrice: 1, totalValue: 1 } },
         ]),
     ]);
 
