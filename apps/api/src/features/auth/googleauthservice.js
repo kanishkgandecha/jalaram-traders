@@ -91,10 +91,14 @@ const googleLogin = async (idToken) => {
 
     } else {
         // New user - create with retailer role
+        // Generate username from Google user's name
+        const username = await authService.generateUniqueUsername(name);
+
         user = await User.create({
             googleId,
             email,
             name,
+            username,
             profileImage: picture || null,
             role: 'retailer', // Auto-assign retailer role for Google sign-ins
             authProvider: 'google',

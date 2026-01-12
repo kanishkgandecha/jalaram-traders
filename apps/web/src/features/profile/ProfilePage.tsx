@@ -400,6 +400,36 @@ export function ProfilePage() {
                             <p className="text-gray-900 py-2 bg-gray-50 px-3 rounded-lg">{user?.email}</p>
                         </div>
 
+                        {/* Username - Editable Once */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                                <span className="font-bold text-green-600">@</span>
+                                Username
+                                {user?.usernameChanged ? (
+                                    <span className="text-xs text-gray-400">(Already changed)</span>
+                                ) : (
+                                    <span className="text-xs text-amber-600">(Editable once)</span>
+                                )}
+                            </label>
+                            {isEditing && !user?.usernameChanged ? (
+                                <div>
+                                    <Input
+                                        name="username"
+                                        value={formData.username || user?.username || ''}
+                                        onChange={handleInputChange}
+                                        placeholder="your_username"
+                                    />
+                                    <p className="text-xs text-amber-600 mt-1">
+                                        ⚠️ Username can only be changed once. Choose wisely!
+                                    </p>
+                                </div>
+                            ) : (
+                                <p className="text-gray-900 py-2 bg-gray-50 px-3 rounded-lg">
+                                    @{user?.username || 'Not set'}
+                                </p>
+                            )}
+                        </div>
+
                         {/* Phone - Editable */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">

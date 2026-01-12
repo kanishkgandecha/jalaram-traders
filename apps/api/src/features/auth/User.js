@@ -25,6 +25,27 @@ const userSchema = new mongoose.Schema(
             maxlength: [100, 'Name cannot exceed 100 characters'],
         },
 
+        // Username - auto-generated, editable only once
+        username: {
+            type: String,
+            unique: true,
+            sparse: true, // Allow null for migration of existing users
+            lowercase: true,
+            trim: true,
+            minlength: [3, 'Username must be at least 3 characters'],
+            maxlength: [30, 'Username cannot exceed 30 characters'],
+            match: [
+                /^[a-z0-9_]+$/,
+                'Username can only contain lowercase letters, numbers, and underscores',
+            ],
+        },
+
+        // Track if username has been changed (allowed only once)
+        usernameChanged: {
+            type: Boolean,
+            default: false,
+        },
+
         email: {
             type: String,
             required: [true, 'Email is required'],

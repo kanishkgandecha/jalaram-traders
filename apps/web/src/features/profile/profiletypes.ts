@@ -8,6 +8,7 @@
 
 export interface UpdateProfilePayload {
     name?: string;
+    username?: string; // Editable once
     phone?: string;
     businessName?: string;
     gstin?: string;

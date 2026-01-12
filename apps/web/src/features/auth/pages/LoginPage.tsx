@@ -69,10 +69,10 @@ export function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <Input
-                            label="Email or Phone"
+                            label="Email, Phone, or Username"
                             name="identifier"
                             type="text"
-                            placeholder="Enter email or phone number"
+                            placeholder="Enter email, phone, or username"
                             value={formData.identifier}
                             onChange={handleChange}
                             required

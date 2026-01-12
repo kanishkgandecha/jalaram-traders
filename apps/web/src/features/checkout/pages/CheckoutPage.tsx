@@ -60,8 +60,8 @@ export function CheckoutPage() {
         phone: user?.phone || '',
         street: user?.address?.street || '',
         city: user?.address?.city || '',
-        district: 'Yavatmal', // Fixed to Yavatmal
-        state: 'Maharashtra', // Fixed to Maharashtra
+        district: user?.address?.district || '',
+        state: user?.address?.state || 'Maharashtra',
         pincode: user?.address?.pincode || '',
     });
 
@@ -77,8 +77,8 @@ export function CheckoutPage() {
                 phone: user.phone || prev.phone,
                 street: user.address?.street || prev.street,
                 city: user.address?.city || prev.city,
-                district: 'Yavatmal', // Fixed to Yavatmal
-                state: 'Maharashtra', // Fixed to Maharashtra
+                district: user.address?.district || prev.district,
+                state: user.address?.state || prev.state,
                 pincode: user.address?.pincode || prev.pincode,
             }));
         }
@@ -106,12 +106,21 @@ export function CheckoutPage() {
             setError('City is required');
             return false;
         }
+        if (!shippingAddress.district?.trim()) {
+            setError('District is required');
+            return false;
+        }
+        if (!shippingAddress.state.trim()) {
+            setError('State is required');
+            return false;
+        }
         if (!shippingAddress.pincode.trim() || shippingAddress.pincode.length !== 6) {
             setError('Valid 6-digit pincode is required');
             return false;
         }
         return true;
     };
+
 
     const handleCreateOrder = async () => {
         setError(null);
@@ -282,22 +291,22 @@ export function CheckoutPage() {
                                     onChange={handleAddressChange}
                                     required
                                 />
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        District <span className="text-xs text-gray-400">(Delivery area)</span>
-                                    </label>
-                                    <div className="px-3 py-2 bg-gray-100 rounded-lg text-gray-700 font-medium">
-                                        Yavatmal
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        State
-                                    </label>
-                                    <div className="px-3 py-2 bg-gray-100 rounded-lg text-gray-700 font-medium">
-                                        Maharashtra
-                                    </div>
-                                </div>
+                                <Input
+                                    label="District"
+                                    name="district"
+                                    value={shippingAddress.district}
+                                    onChange={handleAddressChange}
+                                    placeholder="Enter district"
+                                    required
+                                />
+                                <Input
+                                    label="State"
+                                    name="state"
+                                    value={shippingAddress.state}
+                                    onChange={handleAddressChange}
+                                    placeholder="Enter state"
+                                    required
+                                />
                                 <Input
                                     label="Pincode"
                                     name="pincode"

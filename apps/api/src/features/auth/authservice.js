@@ -30,12 +30,48 @@ const generateToken = (userId) => {
 };
 
 /**
+ * Generate a unique username from a base name
+ * For retailers: uses businessName
+ * For farmers/others: uses personal name
+ * @param {string} baseName - Name to generate username from
+ * @returns {Promise<string>} Unique username
+ */
+const generateUniqueUsername = async (baseName) => {
+    // Convert to lowercase, replace spaces with underscores, remove special chars
+    let baseUsername = baseName
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '_')           // Replace spaces with underscores
+        .replace(/[^a-z0-9_]/g, '')     // Remove non-alphanumeric except underscores
+        .substring(0, 20);              // Limit length to leave room for suffix
+
+    // Ensure minimum length
+    if (baseUsername.length < 3) {
+        baseUsername = 'user';
+    }
+
+    // Add random suffix for uniqueness
+    const randomSuffix = Math.floor(100 + Math.random() * 900); // 3-digit number
+    let username = `${baseUsername}_${randomSuffix}`;
+
+    // Check if username exists and keep trying with new suffixes
+    let attempts = 0;
+    while (await User.findOne({ username }) && attempts < 10) {
+        const newSuffix = Math.floor(1000 + Math.random() * 9000); // 4-digit number
+        username = `${baseUsername}_${newSuffix}`;
+        attempts++;
+    }
+
+    return username;
+};
+
+/**
  * Register a new user
  * @param {Object} userData - User registration data
  * @returns {Promise<Object>} User and token
  */
 const registerUser = async (userData) => {
-    const { email, phone, password, name, role = 'farmer', ...rest } = userData;
+    const { email, phone, password, name, role = 'farmer', businessName, ...rest } = userData;
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -52,12 +88,19 @@ const registerUser = async (userData) => {
     const allowedRoles = ['retailer', 'farmer'];
     const userRole = allowedRoles.includes(role) ? role : 'farmer';
 
+    // Generate username based on role
+    // Retailers: use businessName, Farmers/Others: use personal name
+    const usernameBase = (userRole === 'retailer' && businessName) ? businessName : name;
+    const username = await generateUniqueUsername(usernameBase);
+
     // Create user
     const user = await User.create({
         email,
         phone,
         password,
         name,
+        username,
+        businessName,
         role: userRole,
         authProvider: 'local',
         ...rest,
@@ -74,15 +117,15 @@ const registerUser = async (userData) => {
 };
 
 /**
- * Login user with email/phone and password
- * @param {string} identifier - Email or phone
+ * Login user with email/phone/username and password
+ * @param {string} identifier - Email, phone, or username
  * @param {string} password - Plain text password
  * @returns {Promise<Object>} User and token
  */
 const loginUser = async (identifier, password) => {
-    // Find user by email or phone (include password for comparison)
+    // Find user by email, phone, or username (include password for comparison)
     const user = await User.findOne({
-        $or: [{ email: identifier }, { phone: identifier }],
+        $or: [{ email: identifier }, { phone: identifier }, { username: identifier.toLowerCase() }],
     }).select('+password');
 
     if (!user) {
@@ -152,8 +195,41 @@ const getUserProfile = async (userId) => {
  */
 const updateUserProfile = async (userId, updateData) => {
     // Fields that cannot be updated via this method
-    const restrictedFields = ['password', 'role', 'isActive', 'googleId', 'authProvider'];
+    const restrictedFields = ['password', 'role', 'isActive', 'googleId', 'authProvider', 'usernameChanged'];
     restrictedFields.forEach((field) => delete updateData[field]);
+
+    // Handle one-time username edit
+    if (updateData.username) {
+        const currentUser = await User.findById(userId);
+        if (!currentUser) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        // Check if username has already been changed
+        if (currentUser.usernameChanged) {
+            const error = new Error('Username can only be changed once. You have already used this option.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        // Check if new username is different from current
+        if (updateData.username !== currentUser.username) {
+            // Check if username is available
+            const existingUser = await User.findOne({
+                username: updateData.username.toLowerCase(),
+                _id: { $ne: userId }
+            });
+            if (existingUser) {
+                const error = new Error('Username is already taken');
+                error.statusCode = 400;
+                throw error;
+            }
+            // Mark username as changed
+            updateData.usernameChanged = true;
+        }
+    }
 
     const user = await User.findByIdAndUpdate(
         userId,
@@ -237,6 +313,7 @@ const isPhoneAvailable = async (phone) => {
 
 module.exports = {
     generateToken,
+    generateUniqueUsername,
     registerUser,
     loginUser,
     getUserProfile,

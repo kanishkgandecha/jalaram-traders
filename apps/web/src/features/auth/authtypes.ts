@@ -7,6 +7,8 @@
 export interface User {
     _id: string;
     name: string;
+    username?: string; // Auto-generated, editable once
+    usernameChanged?: boolean; // True if username has been changed
     email: string;
     phone?: string; // Optional for Google auth users
     role: 'admin' | 'employee' | 'retailer' | 'farmer';
@@ -30,7 +32,7 @@ export interface User {
 }
 
 export interface LoginRequest {
-    identifier: string; // email or phone
+    identifier: string; // email, phone, or username
     password: string;
 }
 

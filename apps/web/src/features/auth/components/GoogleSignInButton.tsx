@@ -109,8 +109,16 @@ export function GoogleSignInButton({ onSuccess, onError }: GoogleSignInButtonPro
     }, [scriptLoaded, onSuccess, onError]);
 
     if (!GOOGLE_CLIENT_ID) {
-        // Don't show the button if client ID is not configured
-        return null;
+        // Show message if client ID is not configured
+        return (
+            <div className="text-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-yellow-700 text-sm">
+                    Google Sign-In not configured.
+                    <br />
+                    <span className="text-xs">Add VITE_GOOGLE_CLIENT_ID to apps/web/.env and restart the dev server.</span>
+                </p>
+            </div>
+        );
     }
 
     if (loading) {

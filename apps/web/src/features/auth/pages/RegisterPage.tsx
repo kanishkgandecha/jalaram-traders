@@ -2,18 +2,20 @@
  * Register Page
  * ==============
  * User registration form
+ * Supports Google Sign-In for quick registration
  */
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {  Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '../../../shared/ui/Button';
 import { Input } from '../../../shared/ui/Input';
 import { useAuthStore } from '../authstore';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 
 export function RegisterPage() {
     const navigate = useNavigate();
-    const { register, isLoading, error, clearError } = useAuthStore();
+    const { register, googleLogin, isLoading, error, clearError } = useAuthStore();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -69,6 +71,15 @@ export function RegisterPage() {
 
     const displayError = validationError || error;
 
+    const handleGoogleSuccess = async (idToken: string) => {
+        try {
+            const redirectUrl = await googleLogin(idToken);
+            navigate(redirectUrl);
+        } catch (err) {
+            // Error handled by store
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
@@ -84,11 +95,11 @@ export function RegisterPage() {
                 {/* Logo */}
                 <div className="text-center mb-6">
                     <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-lg mb-3">
-                       <img
-  src="/logo-white.png"
-  alt="Logo"
-  className="w-6 h-6"
-/>
+                        <img
+                            src="/logo-white.png"
+                            alt="Logo"
+                            className="w-6 h-6"
+                        />
                     </div>
                     <h1 className="text-xl font-bold text-gray-900">Create Account</h1>
                 </div>
@@ -189,6 +200,22 @@ export function RegisterPage() {
                             Create Account
                         </Button>
                     </form>
+
+                    {/* Divider */}
+                    <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-200" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-3 bg-white text-gray-500">or sign up with</span>
+                        </div>
+                    </div>
+
+                    {/* Google Sign-In */}
+                    <GoogleSignInButton
+                        onSuccess={handleGoogleSuccess}
+                        onError={(err) => console.error('Google Sign-In Error:', err)}
+                    />
 
                     <div className="mt-6 text-center">
                         <p className="text-gray-600">

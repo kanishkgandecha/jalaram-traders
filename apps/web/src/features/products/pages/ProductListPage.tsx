@@ -19,7 +19,6 @@ import {
     ChevronDown,
     ChevronUp,
     Building2,
-    Tag
 } from 'lucide-react';
 import { Card } from '../../../shared/ui/Card';
 import { useAuthStore } from '../../auth/authstore';
