@@ -49,6 +49,12 @@ import EmployeeOrdersPage from './features/employee/pages/EmployeeOrdersPage';
 // Profile
 import ProfilePage from './features/profile/ProfilePage';
 
+// Notifications
+import NotificationsPage from './features/notifications/pages/NotificationsPage';
+
+// Brands
+import BrandManagementPage from './features/brands/pages/BrandManagementPage';
+
 /**
  * Protected Route wrapper - redirects to login if not authenticated
  * Waits for hydration to complete before making routing decisions
@@ -240,6 +246,22 @@ export function App() {
                 </RoleRoute>
               }
             />
+            <Route
+              path="/dashboard/admin/notifications"
+              element={
+                <RoleRoute allowedRoles={['admin']}>
+                  <NotificationsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/dashboard/admin/brands"
+              element={
+                <RoleRoute allowedRoles={['admin']}>
+                  <BrandManagementPage />
+                </RoleRoute>
+              }
+            />
 
             {/* ========================================
                 EMPLOYEE ROUTES
@@ -277,6 +299,14 @@ export function App() {
               }
             />
             <Route
+              path="/dashboard/employee/notifications"
+              element={
+                <RoleRoute allowedRoles={['employee', 'admin']}>
+                  <NotificationsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/dashboard/employee/stock"
               element={
                 <RoleRoute allowedRoles={['employee', 'admin']}>
@@ -296,6 +326,7 @@ export function App() {
             <Route path="/dashboard/retailer/orders" element={<OrderHistoryPage />} />
             <Route path="/dashboard/retailer/orders/:id" element={<OrderDetailPage />} />
             <Route path="/dashboard/retailer/profile" element={<ProfilePage />} />
+            <Route path="/dashboard/retailer/notifications" element={<NotificationsPage />} />
 
             {/* ========================================
                 FARMER ROUTES
@@ -308,6 +339,7 @@ export function App() {
             <Route path="/dashboard/farmer/orders" element={<OrderHistoryPage />} />
             <Route path="/dashboard/farmer/orders/:id" element={<OrderDetailPage />} />
             <Route path="/dashboard/farmer/profile" element={<ProfilePage />} />
+            <Route path="/dashboard/farmer/notifications" element={<NotificationsPage />} />
 
             {/* ========================================
                 SHARED ORDER DETAIL ROUTE

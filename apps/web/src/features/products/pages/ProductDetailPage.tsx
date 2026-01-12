@@ -143,9 +143,16 @@ export function ProductDetailPage() {
                             {product.category}
                         </span>
                         <h1 className="text-2xl font-bold text-gray-900 mt-1">{product.name}</h1>
-                        {product.brand && (
-                            <p className="text-gray-600 mt-1">by {product.brand}</p>
-                        )}
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                            {product.brand && (
+                                <span className="text-sm text-gray-600">by {product.brand}</span>
+                            )}
+                            {product.hsnCode && (
+                                <span className="px-2.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">
+                                    HSN/SAC: {product.hsnCode}
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     {/* Price */}

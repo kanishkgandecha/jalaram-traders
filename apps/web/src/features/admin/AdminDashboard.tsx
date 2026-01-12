@@ -14,9 +14,6 @@ import {
     ShoppingCart,
     IndianRupee,
     AlertTriangle,
-    Clock,
-    CheckCircle,
-    Truck,
     CreditCard,
     Boxes,
 } from 'lucide-react';

@@ -202,6 +202,47 @@ const notifyOrderEvent = async (type, order, options = {}) => {
                 },
             });
             break;
+
+        case 'order_cancelled':
+            // Notify customer about cancellation with clear indication of who cancelled
+            let cancelMessage;
+            if (options.cancelledBy === 'customer') {
+                // Customer cancelled their own order
+                cancelMessage = options.reason
+                    ? `Your Order #${order.orderNumber} has been cancelled. Reason: ${options.reason}`
+                    : `Your Order #${order.orderNumber} has been cancelled`;
+            } else {
+                // Staff/Admin cancelled the order
+                cancelMessage = options.reason
+                    ? `Your Order #${order.orderNumber} has been cancelled by the seller. Reason: ${options.reason}`
+                    : `Your Order #${order.orderNumber} has been cancelled by the seller`;
+            }
+            notifications.push({
+                userId: order.user,
+                data: {
+                    type: 'alert',
+                    title: 'Order Cancelled',
+                    message: cancelMessage,
+                    link: `/dashboard/retailer/orders/${order._id}`,
+                    relatedId: order._id,
+                    relatedModel: 'Order',
+                },
+            });
+            // Also notify admins if cancelled by customer
+            if (options.cancelledBy === 'customer') {
+                notifications.push({
+                    role: ['admin', 'employee'],
+                    data: {
+                        type: 'alert',
+                        title: 'Order Cancelled',
+                        message: `Order #${order.orderNumber} was cancelled by the customer`,
+                        link: `/dashboard/admin/orders/${order._id}`,
+                        relatedId: order._id,
+                        relatedModel: 'Order',
+                    },
+                });
+            }
+            break;
     }
 
     // Create all notifications

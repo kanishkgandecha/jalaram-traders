@@ -14,6 +14,7 @@ const Cart = require('../cart/Cart');
 const Product = require('../products/Product');
 const User = require('../auth/User');
 const inventoryService = require('../inventory/inventoryservice');
+const notificationsService = require('../notifications/notificationsservice');
 
 /**
  * Create order from cart
@@ -594,19 +595,36 @@ const cancelOrder = async (orderId, userId, reason, userRole = 'retailer') => {
     }
 
     // Release reserved stock (Inventory-First)
+    // Wrap in try-catch to handle cases where products may have been deleted
     for (const item of order.items) {
-        await inventoryService.releaseStock(
-            item.product,
-            item.quantity,
-            orderId,
-            userId,
-            reason || 'Order cancelled'
-        );
+        try {
+            await inventoryService.releaseStock(
+                item.product,
+                item.quantity,
+                orderId,
+                userId,
+                reason || 'Order cancelled'
+            );
+        } catch (stockError) {
+            // Log but continue - product may have been deleted
+            console.warn(`Could not release stock for product ${item.product}: ${stockError.message}`);
+        }
     }
 
     order.updateStatus('cancelled', reason, userId);
     order.cancellationReason = reason;
     await order.save();
+
+    // Notify the retailer about the cancellation
+    try {
+        await notificationsService.notifyOrderEvent('order_cancelled', order, {
+            reason,
+            cancelledBy: isOwner ? 'customer' : 'staff',
+        });
+    } catch (notifError) {
+        // Log but don't fail the cancellation if notification fails
+        console.error('Failed to send cancellation notification:', notifError);
+    }
 
     return order;
 };
