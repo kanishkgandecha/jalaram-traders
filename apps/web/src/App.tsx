@@ -20,6 +20,7 @@ import DesktopLayout from './layouts/desktop/DesktopLayout';
 import LandingPage from './features/landing/LandingPage';
 import LoginPage from './features/auth/pages/LoginPage';
 import RegisterPage from './features/auth/pages/RegisterPage';
+import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage';
 
 // Role Dashboards
 import AdminDashboard from './features/admin/AdminDashboard';
@@ -160,6 +161,10 @@ export function App() {
               <RegisterPage />
             </PublicRoute>
           }
+        />
+        <Route
+          path="/forgot-password"
+          element={<ForgotPasswordPage />}
         />
 
         {/* ==========================================

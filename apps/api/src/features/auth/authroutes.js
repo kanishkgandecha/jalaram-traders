@@ -4,12 +4,16 @@
  * Route definitions for authentication endpoints
  * 
  * Routes:
- * - POST /register      - Create new account
- * - POST /login         - Authenticate user
- * - GET  /me            - Get current user profile
- * - PUT  /me            - Update current user profile
- * - PUT  /change-password - Change password
- * - POST /logout        - Logout user
+ * - POST /register         - Create new account
+ * - POST /login            - Authenticate user
+ * - POST /google           - Google OAuth login
+ * - POST /forgot-password  - Request password reset OTP
+ * - POST /verify-otp       - Verify OTP
+ * - POST /reset-password   - Reset password
+ * - GET  /me               - Get current user profile
+ * - PUT  /me               - Update current user profile
+ * - PUT  /change-password  - Change password
+ * - POST /logout           - Logout user
  * 
  * @module features/auth/authroutes
  */
@@ -43,6 +47,27 @@ router.post('/login', authController.login);
  * @access  Public
  */
 router.post('/google', authController.googleLogin);
+
+/**
+ * @route   POST /api/v1/auth/forgot-password
+ * @desc    Request password reset OTP
+ * @access  Public
+ */
+router.post('/forgot-password', authController.forgotPassword);
+
+/**
+ * @route   POST /api/v1/auth/verify-otp
+ * @desc    Verify OTP for password reset
+ * @access  Public
+ */
+router.post('/verify-otp', authController.verifyOTP);
+
+/**
+ * @route   POST /api/v1/auth/reset-password
+ * @desc    Reset password after OTP verification
+ * @access  Public
+ */
+router.post('/reset-password', authController.resetPassword);
 
 // ==========================================
 // PROTECTED ROUTES

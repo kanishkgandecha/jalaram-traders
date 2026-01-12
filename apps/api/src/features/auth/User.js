@@ -166,6 +166,32 @@ const userSchema = new mongoose.Schema(
         passwordChangedAt: {
             type: Date,
         },
+
+        // Password Reset OTP fields
+        resetOTP: {
+            type: String, // Hashed OTP, never store plain text
+            default: null,
+        },
+
+        resetOTPExpiry: {
+            type: Date,
+            default: null,
+        },
+
+        resetOTPAttempts: {
+            type: Number,
+            default: 0, // Track failed OTP verification attempts
+        },
+
+        lastOTPRequest: {
+            type: Date,
+            default: null, // For rate limiting OTP requests
+        },
+
+        otpRequestCount: {
+            type: Number,
+            default: 0, // Track consecutive OTP requests for progressive rate limiting
+        },
     },
     {
         timestamps: true, // Adds createdAt and updatedAt

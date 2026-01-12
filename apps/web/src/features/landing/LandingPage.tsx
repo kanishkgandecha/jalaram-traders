@@ -30,7 +30,7 @@ const categories = [
     { name: 'Seeds', emoji: '🌱', description: 'High-yield crop seeds' },
     { name: 'Fertilizers', emoji: '🧪', description: 'Organic & chemical fertilizers' },
     { name: 'Pesticides', emoji: '🛡️', description: 'Crop protection solutions' },
-    
+
 ];
 
 export function LandingPage() {
@@ -44,10 +44,10 @@ export function LandingPage() {
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center shadow-lg">
                                 <img
-  src="/logo-white.png"
-  alt="Logo"
-  className="w-6 h-6"
-/>
+                                    src="/logo-white.png"
+                                    alt="Logo"
+                                    className="w-6 h-6"
+                                />
 
                             </div>
                             <div>
@@ -166,7 +166,7 @@ export function LandingPage() {
                         </p>
                     </div>
 
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
                             <span className="text-5xl">🌱</span>
                             <h3 className="font-bold text-xl text-gray-900 mt-4 mb-2">Seeds</h3>
@@ -181,11 +181,6 @@ export function LandingPage() {
                             <span className="text-5xl">🛡️</span>
                             <h3 className="font-bold text-xl text-gray-900 mt-4 mb-2">Pesticides</h3>
                             <p className="text-gray-600 text-sm">Insecticides, Fungicides, Herbicides</p>
-                        </div>
-                        <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
-                            <span className="text-5xl">🔧</span>
-                            <h3 className="font-bold text-xl text-gray-900 mt-4 mb-2">Equipment</h3>
-                            <p className="text-gray-600 text-sm">Sprayers, Tools, Irrigation supplies</p>
                         </div>
                     </div>
 
@@ -281,7 +276,7 @@ export function LandingPage() {
                             </div>
                         </div>
                         <p className="text-sm">
-                            © 2024 Jalaram Traders, Yavatmal. All rights reserved.
+                            © 2026 Jalaram Traders, Yavatmal. All rights reserved.
                         </p>
                     </div>
                 </div>

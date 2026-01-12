@@ -8,6 +8,8 @@
 
 const authService = require('./authservice');
 const googleAuthService = require('./googleauthservice');
+const otpService = require('./otpservice');
+const { sendOTPEmail } = require('../../shared/services/emailservice');
 const { sendSuccess, sendError } = require('../../shared/utils/responsehelper');
 
 /**
@@ -158,6 +160,118 @@ const logout = async (req, res) => {
     sendSuccess(res, 200, 'Logged out successfully');
 };
 
+/**
+ * @desc    Request password reset OTP
+ * @route   POST /api/v1/auth/forgot-password
+ * @access  Public
+ */
+const forgotPassword = async (req, res) => {
+    try {
+        const { identifier } = req.body;
+
+        if (!identifier) {
+            return sendError(res, 400, 'Please provide email or username');
+        }
+
+        console.log(`[OTP] Password reset requested for: ${identifier}`);
+        const result = await otpService.requestPasswordReset(identifier);
+
+        if (!result.success) {
+            console.log(`[OTP] Request blocked: ${result.message}`);
+            return sendError(res, 400, result.message);
+        }
+
+        // Send OTP via email if user was found
+        if (result.otp && result.email) {
+            // Log OTP in development for easy testing
+            console.log(`\n========================================`);
+            console.log(`[OTP] For: ${identifier}`);
+            console.log(`[OTP] Code: ${result.otp}`);
+            console.log(`[OTP] Email: ${result.email}`);
+            console.log(`========================================\n`);
+
+            // Send email
+            const emailResult = await sendOTPEmail(result.email, result.otp, result.expiryMinutes);
+            if (emailResult.success) {
+                console.log(`[OTP] Email sent successfully to ${result.email}`);
+            } else {
+                console.log(`[OTP] Email failed: ${emailResult.error} (OTP logged above)`);
+            }
+        } else {
+            console.log(`[OTP] User not found (showing generic response for security)`);
+        }
+
+        // Always return same message (security - don't reveal if user exists)
+        sendSuccess(res, 200, result.message);
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        sendError(res, 500, 'An error occurred. Please try again.');
+    }
+};
+
+/**
+ * @desc    Verify OTP for password reset
+ * @route   POST /api/v1/auth/verify-otp
+ * @access  Public
+ */
+const verifyOTP = async (req, res) => {
+    try {
+        const { identifier, otp } = req.body;
+
+        if (!identifier || !otp) {
+            return sendError(res, 400, 'Please provide email/username and OTP');
+        }
+
+        // Validate OTP format (6 digits)
+        if (!/^\d{6}$/.test(otp)) {
+            return sendError(res, 400, 'Invalid OTP format');
+        }
+
+        const result = await otpService.verifyPasswordResetOTP(identifier, otp);
+
+        if (!result.success) {
+            return sendError(res, 400, result.message);
+        }
+
+        sendSuccess(res, 200, result.message, {
+            verified: true
+        });
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        sendError(res, 500, 'An error occurred. Please try again.');
+    }
+};
+
+/**
+ * @desc    Reset password after OTP verification
+ * @route   POST /api/v1/auth/reset-password
+ * @access  Public
+ */
+const resetPassword = async (req, res) => {
+    try {
+        const { identifier, newPassword } = req.body;
+
+        if (!identifier || !newPassword) {
+            return sendError(res, 400, 'Please provide email/username and new password');
+        }
+
+        if (newPassword.length < 6) {
+            return sendError(res, 400, 'Password must be at least 6 characters');
+        }
+
+        const result = await otpService.resetPassword(identifier, newPassword);
+
+        if (!result.success) {
+            return sendError(res, 400, result.message);
+        }
+
+        sendSuccess(res, 200, result.message);
+    } catch (error) {
+        console.error('Reset password error:', error);
+        sendError(res, 500, 'An error occurred. Please try again.');
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -166,4 +280,7 @@ module.exports = {
     updateMe,
     changePassword,
     logout,
+    forgotPassword,
+    verifyOTP,
+    resetPassword,
 };
